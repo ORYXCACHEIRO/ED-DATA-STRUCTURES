@@ -1,0 +1,25 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'pt.ipp.estg.data.structure'
+version '1.0.0'
+
+application {
+    mainClass = 'pt.ipp.estg.Main'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'pt.ipp.estg.Main')
+        attributes('Author': 'Sérgio Félix')
+        attributes('Version': '1.0.0')
+    }
+}
