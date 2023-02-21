@@ -1,27 +1,26 @@
 package pt.ipp.estg.algorithms.Sort;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 public class MergeSort<T extends Comparable<T>> {
-    public static <T extends Comparable<T>> void sort(T[] array) {
+    public static <T extends Comparable<T>> void sort(T[] array, Comparator<T> comparator) {
         if (array.length > 1) {
             int mid = array.length / 2;
-            T[] left = (T[]) new Comparable[mid];
-            T[] right = (T[]) new Comparable[array.length - mid];
+            T[] left = Arrays.copyOfRange(array, 0, mid);
+            T[] right = Arrays.copyOfRange(array, mid, array.length);
 
-            System.arraycopy(array, 0, left, 0, mid);
-
-            if (array.length - mid >= 0) System.arraycopy(array, mid, right, 0, array.length - mid);
-
-            sort(left);
-            sort(right);
-            merge(array, left, right);
+            sort(left, comparator);
+            sort(right, comparator);
+            merge(array, left, right, comparator);
         }
     }
 
-    private static <T extends Comparable<? super T>> void merge(T[] array, T[] left, T[] right) {
+    private static <T extends Comparable<? super T>> void merge(T[] array, T[] left, T[] right, Comparator<T> comparator) {
         int i = 0, j = 0, k = 0;
 
         while (i < left.length && j < right.length) {
-            if (left[i].compareTo(right[j]) < 0) {
+            if (comparator.compare(left[i], right[j]) < 0) {
                 array[k] = left[i];
                 i++;
             } else {
