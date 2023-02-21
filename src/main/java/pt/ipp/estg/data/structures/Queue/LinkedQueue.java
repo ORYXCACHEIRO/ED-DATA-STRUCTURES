@@ -56,7 +56,7 @@ public class LinkedQueue<T> implements QueueADT<T> {
     public String toString() {
         StringBuilder result = new StringBuilder();
 
-        for(LinearNode<T> current = this.front; current != null; current = current.next) {
+        for (LinearNode<T> current = this.front; current != null; current = current.next) {
             result.append(current.element.toString()).append("\n");
         }
 

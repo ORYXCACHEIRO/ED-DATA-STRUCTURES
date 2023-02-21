@@ -1,9 +1,9 @@
 package pt.ipp.estg.data.structures.Graph;
 
-import pt.ipp.estg.data.structures.Queue.LinkedQueue;
 import pt.ipp.estg.data.structures.Exceptions.EmptyCollectionException;
 import pt.ipp.estg.data.structures.List.UnorderedArrayList;
 import pt.ipp.estg.data.structures.List.UnorderedListADT;
+import pt.ipp.estg.data.structures.Queue.LinkedQueue;
 import pt.ipp.estg.data.structures.Queue.QueueADT;
 import pt.ipp.estg.data.structures.Stack.LinkedStack;
 import pt.ipp.estg.data.structures.Stack.StackADT;
@@ -20,21 +20,11 @@ public class Graph<T> implements GraphADT<T> {
         this.numVertices = 0;
         this.adjMatrix = new boolean[DEFAULT_CAPACITY][DEFAULT_CAPACITY];
         this.vertices = (T[]) (new Object[DEFAULT_CAPACITY]);
-        this.initAdjMatrix(this.adjMatrix);
-    }
-
-    private void initAdjMatrix(boolean[][] matrix) {
-        for (int i = 0; i < matrix.length; i++) {
-            for (int j = 0; j < matrix.length; j++) {
-                matrix[i][j] = false;
-            }
-        }
     }
 
     private void expandCapacity() {
         T[] largerVertices = (T[]) (new Object[this.vertices.length * 2]);
         boolean[][] largerAdjMatrix = new boolean[this.vertices.length * 2][this.vertices.length * 2];
-        this.initAdjMatrix(largerAdjMatrix);
 
         for (int i = 0; i < this.numVertices; i++) {
             System.arraycopy(this.adjMatrix[i], 0, largerAdjMatrix[i], 0, this.numVertices);
@@ -56,59 +46,7 @@ public class Graph<T> implements GraphADT<T> {
     }
 
     protected boolean indexInvalid(int index) {
-        return index < 0 && index >= this.numVertices;
-    }
-
-    protected Iterator<Integer> iteratorShortestPathIndices(int startIndex, int targetIndex) {
-        int index = startIndex;
-        int[] pathLength = new int[this.numVertices];
-        int[] predecessor = new int[this.numVertices];
-
-        QueueADT<Integer> traversalQueue = new LinkedQueue<>();
-        UnorderedListADT<Integer> resultList = new UnorderedArrayList<>();
-
-        if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex))
-            return resultList.iterator();
-
-        boolean[] visited = new boolean[this.numVertices];
-        for (int i = 0; i < this.numVertices; i++) {
-            visited[i] = false;
-        }
-
-        traversalQueue.enqueue(startIndex);
-        visited[startIndex] = true;
-        pathLength[startIndex] = 0;
-        predecessor[startIndex] = -1;
-
-        while (!traversalQueue.isEmpty() && (index != targetIndex)) {
-            index = traversalQueue.dequeue();
-
-            for (int i = 0; i < numVertices; i++) {
-                if (adjMatrix[index][i] && !visited[i]) {
-                    pathLength[i] = pathLength[index] + 1;
-                    predecessor[i] = index;
-                    traversalQueue.enqueue(i);
-                    visited[i] = true;
-                }
-            }
-        }
-
-        if (index != targetIndex) return resultList.iterator();
-
-        StackADT<Integer> stack = new LinkedStack<>();
-        index = targetIndex;
-        stack.push(index);
-
-        do {
-            index = predecessor[index];
-            stack.push(index);
-        } while (index != startIndex);
-
-        while (!stack.isEmpty()) {
-            resultList.addToRear(stack.pop());
-        }
-
-        return resultList.iterator();
+        return index < 0 || index >= this.numVertices;
     }
 
     public void addVertex(T vertex) {
@@ -128,7 +66,6 @@ public class Graph<T> implements GraphADT<T> {
         if (this.isEmpty()) throw new EmptyCollectionException("Graph");
 
         int pos = this.getIndex(vertex);
-
         if (this.indexInvalid(pos)) throw new IllegalArgumentException();
 
         for (int i = 0; i < this.numVertices; i++) {
@@ -150,7 +87,6 @@ public class Graph<T> implements GraphADT<T> {
     public void addEdge(T vertex1, T vertex2) {
         int index1 = this.getIndex(vertex1);
         int index2 = this.getIndex(vertex2);
-
         if (this.indexInvalid(index1) || this.indexInvalid(index2)) throw new IllegalArgumentException();
 
         if (!this.adjMatrix[index1][index2] || !this.adjMatrix[index2][index1]) {
@@ -164,7 +100,6 @@ public class Graph<T> implements GraphADT<T> {
 
         int pos1 = this.getIndex(vertex1);
         int pos2 = this.getIndex(vertex2);
-
         if (this.indexInvalid(pos1) || this.indexInvalid(pos2)) throw new IllegalArgumentException();
         if (!this.adjMatrix[pos1][pos2] || !this.adjMatrix[pos2][pos2]) throw new IllegalArgumentException();
 
@@ -173,29 +108,24 @@ public class Graph<T> implements GraphADT<T> {
     }
 
     public Iterator<T> iteratorBFS(T startVertex) {
-        QueueADT<Integer> traversalQueue = new LinkedQueue<>();
+        QueueADT<Integer> queue = new LinkedQueue<>();
         UnorderedListADT<T> resultList = new UnorderedArrayList<>();
-        Integer x;
+        boolean[] visited = new boolean[this.numVertices];
 
-        int startIndex = this.getIndex(startVertex);
+        int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
         if (this.indexInvalid(startIndex)) return resultList.iterator();
 
-        boolean[] visited = new boolean[this.numVertices];
-        for (int i = 0; i < this.numVertices; i++) {
-            visited[i] = false;
-        }
-
-        traversalQueue.enqueue(startIndex);
+        queue.enqueue(startIndex);
         visited[startIndex] = true;
 
-        while (!traversalQueue.isEmpty()) {
-            x = traversalQueue.dequeue();
-            resultList.addToRear(this.vertices[x]);
+        while (!queue.isEmpty()) {
+            int currentVertex = queue.dequeue();
+            resultList.addToRear(this.vertices[currentVertex]);
 
             for (int i = 0; i < this.numVertices; i++) {
-                if (this.adjMatrix[x][i] && !visited[i]) {
-                    traversalQueue.enqueue(i);
+                if (this.adjMatrix[currentVertex][i] && !visited[i]) {
                     visited[i] = true;
+                    queue.enqueue(i);
                 }
             }
         }
@@ -204,37 +134,28 @@ public class Graph<T> implements GraphADT<T> {
     }
 
     public Iterator<T> iteratorDFS(T startVertex) {
-        StackADT<Integer> traversalStack = new LinkedStack<>();
+        StackADT<Integer> stack = new LinkedStack<>();
         UnorderedListADT<T> resultList = new UnorderedArrayList<>();
-        Integer x;
-        boolean found;
+        boolean[] visited = new boolean[this.numVertices];
 
-        int startIndex = this.getIndex(startVertex);
+        int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
         if (this.indexInvalid(startIndex)) return resultList.iterator();
 
-        boolean[] visited = new boolean[this.numVertices];
-        for (int i = 0; i < this.numVertices; i++) {
-            visited[i] = false;
-        }
+        stack.push(startIndex);
 
-        traversalStack.push(startIndex);
-        resultList.addToRear(this.vertices[startIndex]);
-        visited[startIndex] = true;
+        while (!stack.isEmpty()) {
+            int currentVertex = stack.pop();
 
-        while (!traversalStack.isEmpty()) {
-            x = traversalStack.peek();
-            found = false;
-
-            for (int i = 0; (i < this.numVertices) && !found; i++) {
-                if (this.adjMatrix[x][i] && !visited[i]) {
-                    traversalStack.push(i);
-                    resultList.addToRear(this.vertices[i]);
-                    visited[i] = true;
-                    found = true;
-                }
+            if (!visited[currentVertex]) {
+                visited[currentVertex] = true;
+                resultList.addToRear(this.vertices[currentVertex]);
             }
 
-            if (!found && !traversalStack.isEmpty()) traversalStack.pop();
+            for (int i = this.numVertices - 1; i >= 0; i--) {
+                if (this.adjMatrix[currentVertex][i] && !visited[i]) {
+                    stack.push(i);
+                }
+            }
         }
 
         return resultList.iterator();
@@ -243,36 +164,82 @@ public class Graph<T> implements GraphADT<T> {
     public Iterator<T> iteratorShortestPath(T startVertex, T targetVertex) {
         UnorderedListADT<T> resultList = new UnorderedArrayList<>();
 
-        int startIndex = this.getIndex(startVertex);
+        int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
         int targetIndex = this.getIndex(targetVertex);
         if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex))
             return resultList.iterator();
 
-        Iterator<Integer> iterator = iteratorShortestPathIndices(startIndex, targetIndex);
+        int[] distances = new int[this.numVertices];
+        int[] predecessors = new int[this.numVertices];
+        boolean[] visited = new boolean[this.numVertices];
 
-        while (iterator.hasNext()) {
-            resultList.addToRear(this.vertices[iterator.next()]);
+        for (int i = 0; i < this.numVertices; i++) {
+            distances[i] = Integer.MAX_VALUE;
         }
+        distances[startIndex] = 0;
+
+        for (int i = 0; i < this.numVertices - 1; i++) {
+            int currentVertex = getMinDistanceVertex(distances, visited);
+            visited[currentVertex] = true;
+
+            for (int j = 0; j < this.numVertices; j++) {
+                if (!visited[j] && this.adjMatrix[currentVertex][j] && distances[currentVertex] != Integer.MAX_VALUE && distances[currentVertex] + 1 < distances[j]) {
+                    distances[j] = distances[currentVertex] + 1;
+                    predecessors[j] = currentVertex;
+                }
+            }
+        }
+
+        int currentVertex = targetIndex;
+        while (currentVertex != startIndex) {
+            resultList.addToFront(this.vertices[currentVertex]);
+            currentVertex = predecessors[currentVertex];
+        }
+        resultList.addToFront(this.vertices[startIndex]);
 
         return resultList.iterator();
     }
 
     public int shortestPathLength(T startVertex, T targetVertex) {
-        int startIndex = getIndex(startVertex);
-        int targetIndex = getIndex(targetVertex);
-        int result = 0;
-
+        int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
+        int targetIndex = this.getIndex(targetVertex);
         if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex))
-            return 0;
+            return -1;
 
-        Iterator<Integer> iterator = iteratorShortestPathIndices(startIndex, targetIndex);
+        int[] distances = new int[this.numVertices];
+        boolean[] visited = new boolean[this.numVertices];
 
-        while (iterator.hasNext()) {
-            result++;
-            iterator.next();
+        for (int i = 0; i < this.numVertices; i++) {
+            distances[i] = Integer.MAX_VALUE;
+        }
+        distances[startIndex] = 0;
+
+        for (int i = 0; i < this.numVertices - 1; i++) {
+            int currentVertex = getMinDistanceVertex(distances, visited);
+            visited[currentVertex] = true;
+
+            for (int j = 0; j < this.numVertices; j++) {
+                if (!visited[j] && this.adjMatrix[currentVertex][j] && distances[currentVertex] != Integer.MAX_VALUE && distances[currentVertex] + 1 < distances[j]) {
+                    distances[j] = distances[currentVertex] + 1;
+                }
+            }
         }
 
-        return result;
+        return distances[targetIndex] == Integer.MAX_VALUE ? -1 : distances[targetIndex];
+    }
+
+    private int getMinDistanceVertex(int[] distances, boolean[] visited) {
+        int minDistance = Integer.MAX_VALUE;
+        int minDistanceVertex = -1;
+
+        for (int i = 0; i < this.numVertices; i++) {
+            if (!visited[i] && distances[i] < minDistance) {
+                minDistance = distances[i];
+                minDistanceVertex = i;
+            }
+        }
+
+        return minDistanceVertex;
     }
 
     public boolean isConnected() {

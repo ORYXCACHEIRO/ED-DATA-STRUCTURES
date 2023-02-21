@@ -1,8 +1,8 @@
 package pt.ipp.estg.data.structures.Tree;
 
-import pt.ipp.estg.data.structures.Queue.LinkedQueue;
 import pt.ipp.estg.data.structures.Exceptions.ElementNotFoundException;
 import pt.ipp.estg.data.structures.List.UnorderedArrayList;
+import pt.ipp.estg.data.structures.Queue.LinkedQueue;
 import pt.ipp.estg.data.structures.Queue.QueueADT;
 
 import java.util.Iterator;

@@ -17,6 +17,8 @@ public interface GraphADT<T> {
 
     Iterator<T> iteratorShortestPath(T startVertex, T targetVertex);
 
+    int shortestPathLength(T startVertex, T targetVertex);
+
     boolean isConnected();
 
     boolean isEmpty();

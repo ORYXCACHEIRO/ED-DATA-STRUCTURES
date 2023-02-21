@@ -1,14 +1,12 @@
 package pt.ipp.estg.data.structures.Graph;
 
-import pt.ipp.estg.data.structures.Queue.LinkedQueue;
 import pt.ipp.estg.data.structures.Exceptions.EmptyCollectionException;
 import pt.ipp.estg.data.structures.List.UnorderedArrayList;
 import pt.ipp.estg.data.structures.List.UnorderedListADT;
+import pt.ipp.estg.data.structures.Queue.LinkedQueue;
 import pt.ipp.estg.data.structures.Queue.QueueADT;
 import pt.ipp.estg.data.structures.Stack.LinkedStack;
 import pt.ipp.estg.data.structures.Stack.StackADT;
-import pt.ipp.estg.data.structures.Tree.Heap;
-import pt.ipp.estg.data.structures.Tree.HeapADT;
 
 import java.util.Iterator;
 
@@ -32,7 +30,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     private void expandCapacity() {
         T[] largerVertices = (T[]) (new Object[super.vertices.length * 2]);
         double[][] largerAdjMatrix = new double[super.vertices.length * 2][super.vertices.length * 2];
-        initAdjMatrix(largerAdjMatrix);
+        this.initAdjMatrix(largerAdjMatrix);
 
         for (int i = 0; i < super.numVertices; i++) {
             System.arraycopy(this.adjMatrix[i], 0, largerAdjMatrix[i], 0, super.numVertices);
@@ -41,17 +39,6 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
 
         super.vertices = largerVertices;
         this.adjMatrix = largerAdjMatrix;
-    }
-
-    protected int getIndexOfAdjVertexWithWeightOf(boolean[] visited, double[] pathWeight, double weight) {
-        for (int i = 0; i < numVertices; i++) {
-            if ((pathWeight[i] == weight) && !visited[i]) {
-                for (int j = 0; j < numVertices; j++) {
-                    if ((adjMatrix[i][j] < Double.POSITIVE_INFINITY) && visited[j]) return i;
-                }
-            }
-        }
-        return -1;
     }
 
     public void addVertex(T vertex) {
@@ -68,11 +55,10 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     }
 
     public void removeVertex(T vertex) {
-        if (this.isEmpty()) throw new EmptyCollectionException("Graph");
+        if (super.isEmpty()) throw new EmptyCollectionException("Graph");
 
-        int pos = getIndex(vertex);
-
-        if (indexInvalid(pos)) throw new IllegalArgumentException();
+        int pos = super.getIndex(vertex);
+        if (super.indexInvalid(pos)) throw new IllegalArgumentException();
 
         for (int i = 0; i < super.numVertices; i++) {
             this.adjMatrix[i][pos] = Double.POSITIVE_INFINITY;
@@ -93,7 +79,6 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     public void addEdge(T vertex1, T vertex2, double weight) {
         int index1 = super.getIndex(vertex1);
         int index2 = super.getIndex(vertex2);
-
         if (super.indexInvalid(index1) || super.indexInvalid(index2)) throw new IllegalArgumentException();
 
         if (this.adjMatrix[index1][index2] == Double.POSITIVE_INFINITY || this.adjMatrix[index2][index1] == Double.POSITIVE_INFINITY) {
@@ -103,52 +88,37 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     }
 
     public void removeEdge(T vertex1, T vertex2) {
-        if (this.isEmpty()) throw new EmptyCollectionException("Graph");
+        if (super.isEmpty()) throw new EmptyCollectionException("Graph");
 
         int index1 = super.getIndex(vertex1);
         int index2 = super.getIndex(vertex2);
-
         if (super.indexInvalid(index1) || super.indexInvalid(index2)) throw new IllegalArgumentException();
         if (this.adjMatrix[index1][index2] == Double.POSITIVE_INFINITY || this.adjMatrix[index2][index1] == Double.POSITIVE_INFINITY)
             throw new IllegalArgumentException();
 
-        adjMatrix[index1][index2] = Double.POSITIVE_INFINITY;
-        adjMatrix[index2][index1] = Double.POSITIVE_INFINITY;
-    }
-
-    public double getEdgeWeight(T vertex1, T vertex2) {
-        int index1 = super.getIndex(vertex1);
-        int index2 = super.getIndex(vertex2);
-
-        if (super.indexInvalid(index1) || super.indexInvalid(index2)) throw new IllegalArgumentException();
-
-        return this.adjMatrix[index1][index2];
+        this.adjMatrix[index1][index2] = Double.POSITIVE_INFINITY;
+        this.adjMatrix[index2][index1] = Double.POSITIVE_INFINITY;
     }
 
     public Iterator<T> iteratorBFS(T startVertex) {
-        QueueADT<Integer> traversalQueue = new LinkedQueue<>();
+        QueueADT<Integer> queue = new LinkedQueue<>();
         UnorderedListADT<T> resultList = new UnorderedArrayList<>();
-        Integer x;
+        boolean[] visited = new boolean[super.numVertices];
 
-        int startIndex = super.getIndex(startVertex);
+        int startIndex = startVertex == null ? 0 : super.getIndex(startVertex);
         if (super.indexInvalid(startIndex)) return resultList.iterator();
 
-        boolean[] visited = new boolean[super.numVertices];
-        for (int i = 0; i < super.numVertices; i++) {
-            visited[i] = false;
-        }
-
-        traversalQueue.enqueue(startIndex);
+        queue.enqueue(startIndex);
         visited[startIndex] = true;
 
-        while (!traversalQueue.isEmpty()) {
-            x = traversalQueue.dequeue();
-            resultList.addToRear(super.vertices[x]);
+        while (!queue.isEmpty()) {
+            int currentVertex = queue.dequeue();
+            resultList.addToRear(super.vertices[currentVertex]);
 
             for (int i = 0; i < super.numVertices; i++) {
-                if ((this.adjMatrix[x][i] < Double.POSITIVE_INFINITY) && !visited[i]) {
-                    traversalQueue.enqueue(i);
+                if ((this.adjMatrix[currentVertex][i] < Double.POSITIVE_INFINITY) && !visited[i]) {
                     visited[i] = true;
+                    queue.enqueue(i);
                 }
             }
         }
@@ -157,106 +127,29 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     }
 
     public Iterator<T> iteratorDFS(T startVertex) {
-        StackADT<Integer> traversalStack = new LinkedStack<>();
+        StackADT<Integer> stack = new LinkedStack<>();
         UnorderedListADT<T> resultList = new UnorderedArrayList<>();
-        Integer x;
-        boolean found;
+        boolean[] visited = new boolean[super.numVertices];
 
-        int startIndex = super.getIndex(startVertex);
+        int startIndex = startVertex == null ? 0 : super.getIndex(startVertex);
         if (super.indexInvalid(startIndex)) return resultList.iterator();
 
-        boolean[] visited = new boolean[super.numVertices];
-        for (int i = 0; i < super.numVertices; i++) {
-            visited[i] = false;
-        }
+        stack.push(startIndex);
 
-        traversalStack.push(startIndex);
-        resultList.addToRear(super.vertices[startIndex]);
-        visited[startIndex] = true;
+        while (!stack.isEmpty()) {
+            int currentVertex = stack.pop();
 
-        while (!traversalStack.isEmpty()) {
-            x = traversalStack.peek();
-            found = false;
+            if (!visited[currentVertex]) {
+                visited[currentVertex] = true;
+                resultList.addToRear(super.vertices[currentVertex]);
+            }
 
-            for (int i = 0; (i < super.numVertices) && !found; i++) {
-                if ((this.adjMatrix[x][i] < Double.POSITIVE_INFINITY) && !visited[i]) {
-                    traversalStack.push(i);
-                    resultList.addToRear(super.vertices[i]);
-                    visited[i] = true;
-                    found = true;
+            for (int i = super.numVertices - 1; i >= 0; i--) {
+                if ((this.adjMatrix[currentVertex][i] < Double.POSITIVE_INFINITY) && !visited[i]) {
+                    stack.push(i);
                 }
             }
-
-            if (!found && !traversalStack.isEmpty()) traversalStack.pop();
         }
-
-        return resultList.iterator();
-    }
-
-    public Iterator<Integer> iteratorShortestPathIndices(int startIndex, int targetIndex) {
-        int index;
-        double weight;
-        int[] predecessor = new int[numVertices];
-        HeapADT<Double> traversalMinHeap = new Heap<>();
-        UnorderedListADT<Integer> resultList = new UnorderedArrayList<>();
-        StackADT<Integer> stack = new LinkedStack<>();
-
-        int[] pathIndex = new int[numVertices];
-
-        if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex))
-            return resultList.iterator();
-
-        double[] pathWeight = new double[numVertices];
-        boolean[] visited = new boolean[numVertices];
-        for (int i = 0; i < numVertices; i++) {
-            pathWeight[i] = Double.POSITIVE_INFINITY;
-            visited[i] = false;
-        }
-
-        pathWeight[startIndex] = 0;
-        predecessor[startIndex] = -1;
-        visited[startIndex] = true;
-        weight = 0;
-
-        for (int i = 0; i < numVertices; i++) {
-            if (!visited[i]) {
-                pathWeight[i] = pathWeight[startIndex] + adjMatrix[startIndex][i];
-                predecessor[i] = startIndex;
-                traversalMinHeap.addElement(pathWeight[i]);
-            }
-        }
-
-        do {
-            weight = traversalMinHeap.removeMin();
-            traversalMinHeap.removeAllElements();
-
-            if (weight == Double.POSITIVE_INFINITY)
-                return resultList.iterator();
-            else {
-                index = getIndexOfAdjVertexWithWeightOf(visited, pathWeight, weight);
-                visited[index] = true;
-            }
-
-            for (int i = 0; i < numVertices; i++) {
-                if (!visited[i]) {
-                    if ((adjMatrix[index][i] < Double.POSITIVE_INFINITY) && (pathWeight[index] + adjMatrix[index][i]) < pathWeight[i]) {
-                        pathWeight[i] = pathWeight[index] + adjMatrix[index][i];
-                        predecessor[i] = index;
-                    }
-                    traversalMinHeap.addElement(pathWeight[i]);
-                }
-            }
-        } while (!traversalMinHeap.isEmpty() && !visited[targetIndex]);
-
-        index = targetIndex;
-        stack.push(index);
-        do {
-            index = predecessor[index];
-            stack.push(index);
-        } while (index != startIndex);
-
-        while (!stack.isEmpty())
-            resultList.addToRear((stack.pop()));
 
         return resultList.iterator();
     }
@@ -264,44 +157,91 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     public Iterator<T> iteratorShortestPath(T startVertex, T targetVertex) {
         UnorderedListADT<T> resultList = new UnorderedArrayList<>();
 
-        int startIndex = this.getIndex(startVertex);
+        int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
         int targetIndex = this.getIndex(targetVertex);
         if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex))
             return resultList.iterator();
 
-        Iterator<Integer> iterator = this.iteratorShortestPathIndices(startIndex, targetIndex);
+        double[] distances = new double[super.numVertices];
+        int[] previous = new int[super.numVertices];
+        boolean[] visited = new boolean[super.numVertices];
 
-        while (iterator.hasNext()) {
-            resultList.addToRear(super.vertices[iterator.next()]);
+        for (int i = 0; i < super.numVertices; i++) {
+            distances[i] = Double.POSITIVE_INFINITY;
+            previous[i] = -1;
         }
+
+        distances[startIndex] = 0;
+
+        while (!visited[targetIndex]) {
+            int current = getClosestUnvisited(distances, visited);
+            visited[current] = true;
+
+            for (int i = 0; i < super.numVertices; i++) {
+                if (this.adjMatrix[current][i] < Double.POSITIVE_INFINITY && !visited[i]) {
+                    double distance = distances[current] + this.adjMatrix[current][i];
+                    if (distance < distances[i]) {
+                        distances[i] = distance;
+                        previous[i] = current;
+                    }
+                }
+            }
+        }
+
+        int vertex = targetIndex;
+        while (previous[vertex] != -1) {
+            resultList.addToFront(super.vertices[vertex]);
+            vertex = previous[vertex];
+        }
+
+        if (resultList.isEmpty()) return resultList.iterator();
+
+        resultList.addToFront(startVertex);
 
         return resultList.iterator();
     }
 
     public double shortestPathWeight(T startVertex, T targetVertex) {
-        int startIndex = getIndex(startVertex);
-        int targetIndex = getIndex(targetVertex);
-        double result = 0;
+        int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
+        int targetIndex = this.getIndex(targetVertex);
+        if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex)) return -1;
 
-        if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex))
-            return Double.POSITIVE_INFINITY;
+        double[] distances = new double[super.numVertices];
+        boolean[] visited = new boolean[super.numVertices];
 
-        int index1, index2;
-        Iterator<Integer> iterator = this.iteratorShortestPathIndices(startIndex, targetIndex);
-
-        if (iterator.hasNext()) {
-            index1 = iterator.next();
-        } else {
-            return Double.POSITIVE_INFINITY;
+        for (int i = 0; i < super.numVertices; i++) {
+            distances[i] = Double.POSITIVE_INFINITY;
         }
 
-        while (iterator.hasNext()) {
-            index2 = iterator.next();
-            result += this.adjMatrix[index1][index2];
-            index1 = index2;
+        distances[startIndex] = 0;
+
+        while (!visited[targetIndex]) {
+            int current = getClosestUnvisited(distances, visited);
+            visited[current] = true;
+
+            for (int i = 0; i < super.numVertices; i++) {
+                if (this.adjMatrix[current][i] < Double.POSITIVE_INFINITY && !visited[i]) {
+                    double distance = distances[current] + this.adjMatrix[current][i];
+                    if (distance < distances[i]) {
+                        distances[i] = distance;
+                    }
+                }
+            }
         }
 
-        return result;
+        return distances[targetIndex];
+    }
+
+    private int getClosestUnvisited(double[] distances, boolean[] visited) {
+        double minDistance = Double.POSITIVE_INFINITY;
+        int minIndex = -1;
+        for (int i = 0; i < super.numVertices; i++) {
+            if (!visited[i] && distances[i] < minDistance) {
+                minDistance = distances[i];
+                minIndex = i;
+            }
+        }
+        return minIndex;
     }
 
     public String toString() {
