@@ -244,6 +244,23 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
         return minIndex;
     }
 
+    public Iterator<T> getAdjacentVertices(T vertex) {
+        if (this.isEmpty()) throw new EmptyCollectionException("Graph");
+
+        UnorderedListADT<T> resultList = new UnorderedArrayList<>();
+
+        int pos = this.getIndex(vertex);
+        if (this.indexInvalid(pos)) return resultList.iterator();
+
+        for (int i = 0; i < super.numVertices; i++) {
+            if (this.adjMatrix[pos][i] < Double.POSITIVE_INFINITY) {
+                resultList.addToRear(super.vertices[i]);
+            }
+        }
+
+        return resultList.iterator();
+    }
+
     public String toString() {
         if (super.numVertices == 0) return "Graph is empty";
 
