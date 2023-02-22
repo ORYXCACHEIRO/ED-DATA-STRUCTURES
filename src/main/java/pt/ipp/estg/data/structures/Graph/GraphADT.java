@@ -19,6 +19,8 @@ public interface GraphADT<T> {
 
     int shortestPathLength(T startVertex, T targetVertex);
 
+    Iterator<T> getAdjacentVertices(T vertex);
+
     boolean isConnected();
 
     boolean isEmpty();
