@@ -159,7 +159,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
 
         int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
         int targetIndex = this.getIndex(targetVertex);
-        if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex))
+        if (super.indexInvalid(startIndex) || super.indexInvalid(targetIndex) || (startIndex == targetIndex))
             return resultList.iterator();
 
         double[] distances = new double[super.numVertices];
@@ -204,7 +204,7 @@ public class Network<T> extends Graph<T> implements NetworkADT<T> {
     public double shortestPathWeight(T startVertex, T targetVertex) {
         int startIndex = startVertex == null ? 0 : this.getIndex(startVertex);
         int targetIndex = this.getIndex(targetVertex);
-        if (this.indexInvalid(startIndex) || this.indexInvalid(targetIndex) || (startIndex == targetIndex)) return -1;
+        if (super.indexInvalid(startIndex) || super.indexInvalid(targetIndex) || (startIndex == targetIndex)) return -1;
 
         double[] distances = new double[super.numVertices];
         boolean[] visited = new boolean[super.numVertices];
