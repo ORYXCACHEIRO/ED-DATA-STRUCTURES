@@ -259,6 +259,16 @@ public class Graph<T> implements GraphADT<T> {
         return resultList.iterator();
     }
 
+    public Iterator<T> getVertices() {
+        UnorderedListADT<T> resultList = new UnorderedArrayList<>();
+
+        for (int i = 0; i < this.numVertices; i++) {
+            resultList.addToRear(this.vertices[i]);
+        }
+
+        return resultList.iterator();
+    }
+
     public boolean isConnected() {
         if (this.isEmpty()) return false;
 

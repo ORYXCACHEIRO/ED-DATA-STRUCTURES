@@ -21,6 +21,8 @@ public interface GraphADT<T> {
 
     Iterator<T> getAdjacentVertices(T vertex);
 
+    Iterator<T> getVertices();
+
     boolean isConnected();
 
     boolean isEmpty();
